@@ -1,0 +1,8 @@
+let event = "CSK student talk";
+let expr = 2 + 3 * 8;
+
+print expr;
+
+let  name = "Godfrey";
+print "Hello " + name;
+print "Welcome to " + event;
