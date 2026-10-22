@@ -16,6 +16,8 @@ const (
 	EOF TokenType = iota
 	LET
 	PRINT
+	FN
+	FOR
 	IDENT
 	NUMBER
 	STRING
@@ -38,6 +40,10 @@ func (t TokenType) String() string {
 		return "LET"
 	case PRINT:
 		return "PRINT"
+	case FN:
+		return "FN"
+	case FOR:
+		return "FOR"	
 	case IDENT:
 		return "IDENT"
 	case NUMBER:
@@ -78,6 +84,8 @@ func (t Token) String() string {
 var keywords = map[string]TokenType{
 	"let":   LET,
 	"print": PRINT,
+	"fn": FN,
+	"for": FOR,
 }
 
 
