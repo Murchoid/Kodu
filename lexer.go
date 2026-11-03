@@ -14,11 +14,30 @@ type TokenType int
 
 const (
 	EOF TokenType = iota
-	LET
+
+	//keywords
+	VAR
 	PRINT
+	AND
+	CLASS
+	ELSE
+	FALSE
+	FUN
+	FOR
+	IF
+	NIL
+	OR
+	RETURN
+	SUPER
+	THIS
+	TRUE
+	WHILE
+
+	//literals
 	IDENT
 	NUMBER
 	STRING
+
 	ASSIGN
 	ADD
 	SUB
@@ -26,18 +45,60 @@ const (
 	DIVIDE
 	LPARAN
 	RPARAN
+	LBRACE
+	RBRACE
+	DOT
+	COMMA
+	LESS    //<
+	LTHAN   //<
+	LEQTO   //<=
+	GREATER //>
+	GTHAN   //>
+	GEQTO   //>=
+	NOT     //!
+	NOTEQ   //!=
+	EQTO    //==
 	SEMICOLON
 )
 
+const LET = VAR
 
 func (t TokenType) String() string {
 	switch t {
 	case EOF:
 		return "EOF"
-	case LET:
-		return "LET"
+	case VAR:
+		return "VAR"
 	case PRINT:
 		return "PRINT"
+	case AND:
+		return "AND"
+	case CLASS:
+		return "CLASS"
+	case ELSE:
+		return "ELSE"
+	case FALSE:
+		return "FALSE"
+	case FUN:
+		return "FUN"
+	case FOR:
+		return "FOR"
+	case IF:
+		return "IF"
+	case NIL:
+		return "NIL"
+	case OR:
+		return "OR"
+	case RETURN:
+		return "RETURN"
+	case SUPER:
+		return "SUPER"
+	case THIS:
+		return "THIS"
+	case TRUE:
+		return "TRUE"
+	case WHILE:
+		return "WHILE"
 	case IDENT:
 		return "IDENT"
 	case NUMBER:
@@ -58,6 +119,32 @@ func (t TokenType) String() string {
 		return "LPARAN"
 	case RPARAN:
 		return "RPARAN"
+	case LBRACE:
+		return "LBRACE"
+	case RBRACE:
+		return "RBRACE"
+	case DOT:
+		return "DOT"
+	case COMMA:
+		return "COMMA"
+	case LESS:
+		return "LESS"
+	case LTHAN:
+		return "LTHAN"
+	case LEQTO:
+		return "LEQTO"
+	case GREATER:
+		return "GREATER"
+	case GTHAN:
+		return "GTHAN"
+	case GEQTO:
+		return "GEQTO"
+	case NOT:
+		return "NOT"
+	case NOTEQ:
+		return "NOTEQ"
+	case EQTO:
+		return "EQTO"
 	case SEMICOLON:
 		return "SEMICOLON"
 	default:
@@ -74,12 +161,25 @@ func (t Token) String() string {
 	return fmt.Sprintf("Token(%s, %q)", t.Type, t.Literal)
 }
 
-
 var keywords = map[string]TokenType{
-	"let":   LET,
-	"print": PRINT,
+	"var":    VAR,
+	"let":    VAR,
+	"print":  PRINT,
+	"and":    AND,
+	"class":  CLASS,
+	"else":   ELSE,
+	"false":  FALSE,
+	"fun":    FUN,
+	"for":    FOR,
+	"if":     IF,
+	"nil":    NIL,
+	"or":     OR,
+	"return": RETURN,
+	"super":  SUPER,
+	"this":   THIS,
+	"true":   TRUE,
+	"while":  WHILE,
 }
-
 
 func LookupIdent(ident string) TokenType {
 	if tokType, ok := keywords[ident]; ok {
@@ -99,107 +199,114 @@ func (al *Alexer) ALex() []Token {
 	var tokens []Token
 	for al.pos < len(al.source) {
 		tok := al.peek(0)
-
+		var thisToken Token
 		switch tok {
 		// Ignore whitespace: spaces, tabs, carriage returns, and newlines
 		case ' ', '\t', '\r', '\n':
 			al.consume()
-
-		case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
-			num := al.buildNumber()
-			numToken := Token{
-				Literal: num,
-				Type:    NUMBER,
-			}
-			tokens = append(tokens, numToken)
+			continue
 
 		case '*':
-			starTok := Token{
-				Literal: "*",
-				Type:    STAR,
-			}
-			tokens = append(tokens, starTok)
-			al.consume()
+			thisToken = al.createAndConsumeToken("*", STAR)
 
 		case '+':
-			plusTok := Token{
-				Literal: "+",
-				Type:    ADD,
-			}
-			tokens = append(tokens, plusTok)
-			al.consume()
+			thisToken = al.createAndConsumeToken("+", ADD)
 
 		case '-':
-			subTok := Token{
-				Literal: "-",
-				Type:    SUB,
-			}
-			tokens = append(tokens, subTok)
-			al.consume()
+			thisToken = al.createAndConsumeToken("-", SUB)
 
 		case '/':
-			divTok := Token{
-				Literal: "/",
-				Type:    DIVIDE,
+			if al.peek(1) == '/' {
+				for al.pos < len(al.source) && al.peek(0) != '\n' {
+					al.consume()
+				}
+				continue
+			} else if al.peek(1) == '*' {
+				for al.pos < len(al.source) {
+					if al.peek(0) == '*' && al.peek(1) == '/' {
+						al.consume()
+						al.consume()
+						break
+					}
+					al.consume()
+				}
+				al.consume() // the last /
+				continue
 			}
-			tokens = append(tokens, divTok)
-			al.consume()
+			thisToken = al.createAndConsumeToken("/", DIVIDE)
 
 		case '=':
-			assignTok := Token{
-				Literal: "=",
-				Type:    ASSIGN,
+			if al.peek(1) == '=' {
+				al.consume()
+				thisToken = al.createAndConsumeToken("==", EQTO)
+			} else {
+				thisToken = al.createAndConsumeToken("=", ASSIGN)
 			}
-			tokens = append(tokens, assignTok)
-			al.consume()
+
+		case '!':
+			if al.peek(1) == '=' {
+				al.consume()
+				thisToken = al.createAndConsumeToken("!=", NOTEQ)
+			} else {
+				thisToken = al.createAndConsumeToken("!", NOT)
+			}
+
+		case '<':
+			if al.peek(1) == '=' {
+				al.consume()
+				thisToken = al.createAndConsumeToken("<=", LEQTO)
+			} else {
+				thisToken = al.createAndConsumeToken("<", LESS)
+			}
+
+		case '>':
+			if al.peek(1) == '=' {
+				al.consume()
+				thisToken = al.createAndConsumeToken(">=", GEQTO)
+			} else {
+				thisToken = al.createAndConsumeToken(">", GREATER)
+			}
 
 		case '(':
-			lPTok := Token{
-				Literal: "(",
-				Type:    LPARAN,
-			}
-			tokens = append(tokens, lPTok)
-			al.consume()
+			thisToken = al.createAndConsumeToken("(", LPARAN)
 
 		case ')':
-			rPTok := Token{
-				Literal: ")",
-				Type:    RPARAN,
-			}
-			tokens = append(tokens, rPTok)
-			al.consume()
+			thisToken = al.createAndConsumeToken(")", RPARAN)
 
-		case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-			'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_':
-			ident := al.buildIdent()
-			identTok := Token{
-				Literal: ident,
-				Type:    LookupIdent(ident), 
-			}
-			tokens = append(tokens, identTok)
+		case '{':
+			thisToken = al.createAndConsumeToken("{", LBRACE)
+
+		case '}':
+			thisToken = al.createAndConsumeToken("}", RBRACE)
+
+		case '.':
+			thisToken = al.createAndConsumeToken(".", DOT)
+
+		case ',':
+			thisToken = al.createAndConsumeToken(",", COMMA)
+
+		case ';':
+			thisToken = al.createAndConsumeToken(";", SEMICOLON)
 
 		case '"':
 			str := al.buildString()
-			strTok := Token{
-				Literal: str,
-				Type:    STRING,
-			}
-			tokens = append(tokens, strTok)
-
-		case ';':
-			semiTok := Token{
-				Literal: ";",
-				Type:    SEMICOLON,
-			}
-			tokens = append(tokens, semiTok)
-			al.consume()
+			thisToken = Token{Literal: str, Type: STRING}
 
 		default:
-			panic(fmt.Sprintf("Unknown token: %q at pos %d", tok, al.pos))
+			if isDigit(tok) {
+				num := al.buildNumber()
+				thisToken = Token{Literal: num, Type: NUMBER}
+			} else if isAlphabet(tok) {
+				ident := al.buildIdent()
+				thisToken = Token{Literal: ident, Type: LookupIdent(ident)}
+			} else {
+				panic(fmt.Sprintf("Unknown token: %q at pos %d", tok, al.pos))
+			}
 		}
+		tokens = append(tokens, thisToken)
 	}
 
-	// Add EOF token to mark the end of input
+	// to mark the end of input
 	eofTok := Token{
 		Literal: "EOF",
 		Type:    EOF,
@@ -237,6 +344,12 @@ func (al *Alexer) buildNumber() string {
 	for al.pos < len(al.source) && isDigit(al.peek(0)) {
 		numStr = append(numStr, al.consume())
 	}
+	if al.peek(0) == '.' && isDigit(al.peek(1)) {
+		numStr = append(numStr, al.consume())
+		for al.pos < len(al.source) && isDigit(al.peek(0)) {
+			numStr = append(numStr, al.consume())
+		}
+	}
 
 	return string(numStr)
 }
@@ -270,6 +383,16 @@ func (al *Alexer) buildIdent() string {
 	return str.String()
 }
 
+func (al *Alexer) createAndConsumeToken(literal string, tokType TokenType) Token {
+	tok := Token{
+		Literal: literal,
+		Type:    tokType,
+	}
+	al.consume()
+
+	return tok
+}
+
 func isDigit(tok byte) bool {
 	return tok >= '0' && tok <= '9'
 }
@@ -282,7 +405,6 @@ func isAlphanumeric(tok byte) bool {
 	return isDigit(tok) || isAlphabet(tok)
 }
 
-
 func DumpTokens(tokens []Token) {
 	fmt.Printf("--- Tokens Dump (Total: %d) ---\n", len(tokens))
 	for i, tok := range tokens {
@@ -290,7 +412,6 @@ func DumpTokens(tokens []Token) {
 	}
 	fmt.Println("------------------------------")
 }
-
 
 func (al *Alexer) DumpTokens(tokens []Token) {
 	DumpTokens(tokens)

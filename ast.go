@@ -36,7 +36,6 @@ func (*LetStmt) stmtNode()    {}
 func (*AssignStmt) stmtNode() {}
 func (*PrintStmt) stmtNode()  {}
 
-
 func (n *NumberLit) String() string { return fmt.Sprint(n.Value) }
 func (n *StringLit) String() string { return fmt.Sprint(n.Value) }
 func (n *Ident) String() string     { return n.Name }

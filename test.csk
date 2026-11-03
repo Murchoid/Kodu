@@ -1,8 +1,23 @@
-let event = "CSK student talk";
-let expr = 2 + 3 * 8;
+class Person {
+    var name;
+    var age;
+    var sex;
+    
+    init(name, age, sex) {
+        this.name = name;
+        this.age = age;
+        this.sex = sex;
+    }
+    sayHello() {
+        print "My name is " + name, " and I am a " + age + " year old " + sex;
+    }
+}
+//this is a single line comment, its ignored
+/* This is a multiline comment
+It is also ignored
+*/
 
-print expr;
-
-let  name = "Godfrey";
-print "Hello " + name;
-print "Welcome to " + event;
+fun main() {
+    var person = Person("Michael", 22, "male");
+    person.sayHello();
+}
