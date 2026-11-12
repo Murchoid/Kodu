@@ -2,68 +2,137 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 type Alexer struct {
 	source string
 	pos    int
+	line   int
+	start  int
 }
 
 type TokenType int
 
 const (
 	EOF TokenType = iota
-	LET
+	VAR
 	PRINT
-	FN
 	FOR
 	IDENT
 	NUMBER
 	STRING
-	ASSIGN
 	ADD
 	SUB
 	STAR
+	COMMA
+	DOT
 	DIVIDE
 	LPARAN
 	RPARAN
+	LBRACE
+	RBRACE
+	CLASS
+	SUPER
+	NOT
+	NOT_EQUAL
+	EQUAL
+	EQUAL_EQUAL
+	GREATER
+	GREATER_EQUAL
+	LESS
+	LESS_EQUAL
+	AND
+	ELSE
+	FALSE
+	FUN
+	IF
+	NIL
+	OR
+	RETURN
+	THIS
+	TRUE
+	WHILE
 	SEMICOLON
 )
-
 
 func (t TokenType) String() string {
 	switch t {
 	case EOF:
 		return "EOF"
-	case LET:
-		return "LET"
+	case VAR:
+		return "VAR"
 	case PRINT:
 		return "PRINT"
-	case FN:
-		return "FN"
 	case FOR:
-		return "FOR"	
+		return "FOR"
 	case IDENT:
 		return "IDENT"
 	case NUMBER:
 		return "NUMBER"
 	case STRING:
 		return "STRING"
-	case ASSIGN:
-		return "ASSIGN"
 	case ADD:
 		return "ADD"
 	case SUB:
 		return "SUB"
 	case STAR:
 		return "STAR"
+	case COMMA:
+		return "COMMA"
+	case DOT:
+		return "DOT"
 	case DIVIDE:
 		return "DIVIDE"
 	case LPARAN:
 		return "LPARAN"
 	case RPARAN:
 		return "RPARAN"
+	case LBRACE:
+		return "LBRACE"
+	case RBRACE:
+		return "RBRACE"
+	case CLASS:
+		return "CLASS"
+	case SUPER:
+		return "SUPER"
+	case NOT:
+		return "NOT"
+	case NOT_EQUAL:
+		return "NOT_EQUAL"
+	case EQUAL:
+		return "EQUAL"
+	case EQUAL_EQUAL:
+		return "EQUAL_EQUAL"
+	case GREATER:
+		return "GREATER"
+	case GREATER_EQUAL:
+		return "GREATER_EQUAL"
+	case LESS:
+		return "LESS"
+	case LESS_EQUAL:
+		return "LESS_EQUAL"
+	case AND:
+		return "AND"
+	case ELSE:
+		return "ELSE"
+	case FALSE:
+		return "FALSE"
+	case FUN:
+		return "FUN"
+	case IF:
+		return "IF"
+	case NIL:
+		return "NIL"
+	case OR:
+		return "OR"
+	case RETURN:
+		return "RETURN"
+	case THIS:
+		return "THIS"
+	case TRUE:
+		return "TRUE"
+	case WHILE:
+		return "WHILE"
 	case SEMICOLON:
 		return "SEMICOLON"
 	default:
@@ -80,14 +149,24 @@ func (t Token) String() string {
 	return fmt.Sprintf("Token(%s, %q)", t.Type, t.Literal)
 }
 
-
 var keywords = map[string]TokenType{
-	"let":   LET,
-	"print": PRINT,
-	"fn": FN,
-	"for": FOR,
+	"var":    VAR,
+	"print":  PRINT,
+	"fun":    FUN,
+	"for":    FOR,
+	"class":  CLASS,
+	"super":  SUPER,
+	"and":    AND,
+	"else":   ELSE,
+	"false":  FALSE,
+	"if":     IF,
+	"nil":    NIL,
+	"or":     OR,
+	"return": RETURN,
+	"this":   THIS,
+	"true":   TRUE,
+	"while":  WHILE,
 }
-
 
 func LookupIdent(ident string) TokenType {
 	if tokType, ok := keywords[ident]; ok {
@@ -106,113 +185,146 @@ func NewLexer(source string) *Alexer {
 func (al *Alexer) ALex() []Token {
 	var tokens []Token
 	for al.pos < len(al.source) {
+		var token Token
 		tok := al.peek(0)
-
+		al.start = 0
 		switch tok {
 		// Ignore whitespace: spaces, tabs, carriage returns, and newlines
-		case ' ', '\t', '\r', '\n':
+		case ' ', '\t', '\r':
 			al.consume()
+			continue
 
-		case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
-			num := al.buildNumber()
-			numToken := Token{
-				Literal: num,
-				Type:    NUMBER,
-			}
-			tokens = append(tokens, numToken)
+		case '\n':
+			al.line++
+			al.consume()
+			continue
 
 		case '*':
-			starTok := Token{
-				Literal: "*",
-				Type:    STAR,
-			}
-			tokens = append(tokens, starTok)
+			token = al.prepareToken("*", STAR)
 			al.consume()
 
 		case '+':
-			plusTok := Token{
-				Literal: "+",
-				Type:    ADD,
-			}
-			tokens = append(tokens, plusTok)
+			token = al.prepareToken("+", ADD)
 			al.consume()
 
 		case '-':
-			subTok := Token{
-				Literal: "-",
-				Type:    SUB,
-			}
-			tokens = append(tokens, subTok)
+			token = al.prepareToken("-", SUB)
+			al.consume()
+
+		case ',':
+			token = al.prepareToken(",", COMMA)
+			al.consume()
+
+		case '.':
+			token = al.prepareToken(".", DOT)
 			al.consume()
 
 		case '/':
-			divTok := Token{
-				Literal: "/",
-				Type:    DIVIDE,
+			if al.peek(1) == '/' {
+				al.consume()
+				al.consume()
+				for al.pos < len(al.source) && al.peek(0) != '\n' {
+					al.consume()
+				}
+				continue
+			} else if al.peek(1) == '*' {
+				al.consume()
+				al.consume()
+				for al.pos < len(al.source) && !(al.peek(0) == '*' && al.peek(1) == '/') {
+					if al.peek(0) == '\n' {
+						al.line++
+					}
+					al.consume()
+				}
+				al.consume() // '*'
+				al.consume() // '/'
+				continue
+			} else {
+				token = al.prepareToken("/", DIVIDE)
+				al.consume()
 			}
-			tokens = append(tokens, divTok)
-			al.consume()
+
+		case '!':
+			if al.peek(1) == '=' {
+				al.consume()
+				al.consume()
+				token = al.prepareToken("!=", NOT_EQUAL)
+			} else {
+				token = al.prepareToken("!", NOT)
+				al.consume()
+			}
 
 		case '=':
-			assignTok := Token{
-				Literal: "=",
-				Type:    ASSIGN,
+			if al.peek(1) == '=' {
+				al.consume()
+				al.consume()
+				token = al.prepareToken("==", EQUAL_EQUAL)
+			} else {
+				token = al.prepareToken("=", EQUAL)
+				al.consume()
 			}
-			tokens = append(tokens, assignTok)
-			al.consume()
+
+		case '>':
+			if al.peek(1) == '=' {
+				al.consume()
+				al.consume()
+				token = al.prepareToken(">=", GREATER_EQUAL)
+			} else {
+				token = al.prepareToken(">", GREATER)
+				al.consume()
+			}
+
+		case '<':
+			if al.peek(1) == '=' {
+				al.consume()
+				al.consume()
+				token = al.prepareToken("<=", LESS_EQUAL)
+			} else {
+				token = al.prepareToken("<", LESS)
+				al.consume()
+			}
 
 		case '(':
-			lPTok := Token{
-				Literal: "(",
-				Type:    LPARAN,
-			}
-			tokens = append(tokens, lPTok)
+			token = al.prepareToken("(", LPARAN)
 			al.consume()
 
 		case ')':
-			rPTok := Token{
-				Literal: ")",
-				Type:    RPARAN,
-			}
-			tokens = append(tokens, rPTok)
+			token = al.prepareToken(")", RPARAN)
 			al.consume()
 
-		case 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-			'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_':
-			ident := al.buildIdent()
-			identTok := Token{
-				Literal: ident,
-				Type:    LookupIdent(ident), 
-			}
-			tokens = append(tokens, identTok)
+		case '{':
+			token = al.prepareToken("{", LBRACE)
+			al.consume()
+
+		case '}':
+			token = al.prepareToken("}", RBRACE)
+			al.consume()
 
 		case '"':
 			str := al.buildString()
-			strTok := Token{
-				Literal: str,
-				Type:    STRING,
-			}
-			tokens = append(tokens, strTok)
+			token = al.prepareToken(str, STRING)
 
 		case ';':
-			semiTok := Token{
-				Literal: ";",
-				Type:    SEMICOLON,
-			}
-			tokens = append(tokens, semiTok)
+			token = al.prepareToken(";", SEMICOLON)
 			al.consume()
 
 		default:
-			panic(fmt.Sprintf("Unknown token: %q at pos %d", tok, al.pos))
+			if isAlphabet(tok) {
+				str := al.buildIdent()
+				t := LookupIdent(str)
+				token = al.prepareToken(str, t)
+			} else if isDigit(tok) {
+				num := al.buildNumber()
+				token = al.prepareToken(num, NUMBER)
+			} else {
+				panic(fmt.Sprintf("Unknown token: %q at pos %d", tok, al.pos))
+			}
 		}
+		tokens = append(tokens, token)
 	}
 
 	// Add EOF token to mark the end of input
-	eofTok := Token{
-		Literal: "EOF",
-		Type:    EOF,
-	}
-	tokens = append(tokens, eofTok)
+	tokens = append(tokens, al.prepareToken("EOF", EOF))
 
 	return tokens
 }
@@ -241,41 +353,53 @@ func (al *Alexer) consume() byte {
 }
 
 func (al *Alexer) buildNumber() string {
-	var numStr []byte
+	al.start = al.pos
 	for al.pos < len(al.source) && isDigit(al.peek(0)) {
-		numStr = append(numStr, al.consume())
+		al.consume()
 	}
-
-	return string(numStr)
+	
+	numStr := al.source[al.start:al.pos]
+	return numStr
 }
 
 func (al *Alexer) buildString() string {
 	al.consume() // Consume the opening double quote
+	al.start = al.pos
 
-	var str strings.Builder
 	for al.pos < len(al.source) && al.peek(0) != '"' {
 		if al.peek(0) == '\n' {
+			al.line++
 			panic("No closing double quote for string before newline")
 		}
-		str.WriteByte(al.consume())
+		al.consume()
 	}
 
 	if al.pos >= len(al.source) {
 		panic("No closing double quote for string")
 	}
 
+	str := al.source[al.start:al.pos]
 	al.consume() // Consume the closing double quote
-	return str.String()
+	return str
 }
 
 func (al *Alexer) buildIdent() string {
-	var str strings.Builder
-
+	al.start = al.pos
 	for al.pos < len(al.source) && isAlphanumeric(al.peek(0)) {
-		str.WriteByte(al.consume())
+		al.consume()
 	}
 
-	return str.String()
+	str := al.source[al.start:al.pos]
+	return str
+}
+
+func (al *Alexer) prepareToken(lit string, tok TokenType) Token {
+	token := Token{
+		Literal: lit,
+		Type:    tok,
+	}
+
+	return token
 }
 
 func isDigit(tok byte) bool {
@@ -290,7 +414,6 @@ func isAlphanumeric(tok byte) bool {
 	return isDigit(tok) || isAlphabet(tok)
 }
 
-
 func DumpTokens(tokens []Token) {
 	fmt.Printf("--- Tokens Dump (Total: %d) ---\n", len(tokens))
 	for i, tok := range tokens {
@@ -298,7 +421,6 @@ func DumpTokens(tokens []Token) {
 	}
 	fmt.Println("------------------------------")
 }
-
 
 func (al *Alexer) DumpTokens(tokens []Token) {
 	DumpTokens(tokens)
