@@ -15,6 +15,10 @@ func main() {
 	alexer := NewLexer(string(data))
 	tokens := alexer.ALex()
 
-	DumpTokens(tokens)
+	if alexer.hasErrors {
+		ReportErrors()
+	} else {
+		DumpTokens(tokens)
+	}
 
 }

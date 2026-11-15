@@ -6,6 +6,7 @@ import (
 
 type Alexer struct {
 	source string
+	hasErrors bool
 	pos    int
 	line   int
 	start  int
@@ -179,6 +180,9 @@ func NewLexer(source string) *Alexer {
 	return &Alexer{
 		source: source,
 		pos:    0,
+		hasErrors: false,
+		line: 0,
+		start: 0,
 	}
 }
 
@@ -309,6 +313,7 @@ func (al *Alexer) ALex() []Token {
 			al.consume()
 
 		default:
+			al.start = al.pos
 			if isAlphabet(tok) {
 				str := al.buildIdent()
 				t := LookupIdent(str)
@@ -317,7 +322,9 @@ func (al *Alexer) ALex() []Token {
 				num := al.buildNumber()
 				token = al.prepareToken(num, NUMBER)
 			} else {
-				panic(fmt.Sprintf("Unknown token: %q at pos %d", tok, al.pos))
+				al.hasErrors = true
+				AppendError(al.line,al.source[al.start:al.pos],fmt.Sprintf("Unknown token: %q at pos %d", tok, al.pos))
+				al.consume()
 			}
 		}
 		tokens = append(tokens, token)
@@ -369,13 +376,18 @@ func (al *Alexer) buildString() string {
 	for al.pos < len(al.source) && al.peek(0) != '"' {
 		if al.peek(0) == '\n' {
 			al.line++
-			panic("No closing double quote for string before newline")
+			al.hasErrors = true
+			AppendError(al.line, al.source[al.start:al.pos], "No closing double quote for string before endline")
+			return  al.source[al.start:al.pos]
 		}
 		al.consume()
 	}
 
 	if al.pos >= len(al.source) {
-		panic("No closing double quote for string")
+		end := al.start + (al.pos-al.start)/4
+		al.hasErrors = true
+		AppendError(al.line, al.source[al.start:end], "No closing double quote for string")
+		return  al.source[al.start:end]
 	}
 
 	str := al.source[al.start:al.pos]
