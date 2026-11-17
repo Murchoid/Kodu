@@ -6,54 +6,45 @@ type TokenType int
 
 const (
 	EOF TokenType = iota
-
-	//keywords
 	VAR
 	PRINT
-	AND
-	CLASS
-	ELSE
-	FALSE
-	FUN
 	FOR
-	IF
-	NIL
-	OR
-	RETURN
-	SUPER
-	THIS
-	TRUE
-	WHILE
-
-	//literals
 	IDENT
 	NUMBER
 	STRING
-
-	ASSIGN
 	ADD
 	SUB
 	STAR
+	COMMA
+	DOT
 	DIVIDE
 	LPARAN
 	RPARAN
 	LBRACE
 	RBRACE
-	DOT
-	COMMA
-	LESS    //<
-	LTHAN   //<
-	LEQTO   //<=
-	GREATER //>
-	GTHAN   //>
-	GEQTO   //>=
-	NOT     //!
-	NOTEQ   //!=
-	EQTO    //==
+	CLASS
+	SUPER
+	NOT
+	NOT_EQUAL
+	EQUAL
+	EQUAL_EQUAL
+	GREATER
+	GREATER_EQUAL
+	LESS
+	LESS_EQUAL
+	AND
+	ELSE
+	FALSE
+	FUN
+	IF
+	NIL
+	OR
+	RETURN
+	THIS
+	TRUE
+	WHILE
 	SEMICOLON
 )
-
-const LET = VAR
 
 func (t TokenType) String() string {
 	switch t {
@@ -63,48 +54,24 @@ func (t TokenType) String() string {
 		return "VAR"
 	case PRINT:
 		return "PRINT"
-	case AND:
-		return "AND"
-	case CLASS:
-		return "CLASS"
-	case ELSE:
-		return "ELSE"
-	case FALSE:
-		return "FALSE"
-	case FUN:
-		return "FUN"
 	case FOR:
 		return "FOR"
-	case IF:
-		return "IF"
-	case NIL:
-		return "NIL"
-	case OR:
-		return "OR"
-	case RETURN:
-		return "RETURN"
-	case SUPER:
-		return "SUPER"
-	case THIS:
-		return "THIS"
-	case TRUE:
-		return "TRUE"
-	case WHILE:
-		return "WHILE"
 	case IDENT:
 		return "IDENT"
 	case NUMBER:
 		return "NUMBER"
 	case STRING:
 		return "STRING"
-	case ASSIGN:
-		return "ASSIGN"
 	case ADD:
 		return "ADD"
 	case SUB:
 		return "SUB"
 	case STAR:
 		return "STAR"
+	case COMMA:
+		return "COMMA"
+	case DOT:
+		return "DOT"
 	case DIVIDE:
 		return "DIVIDE"
 	case LPARAN:
@@ -115,28 +82,48 @@ func (t TokenType) String() string {
 		return "LBRACE"
 	case RBRACE:
 		return "RBRACE"
-	case DOT:
-		return "DOT"
-	case COMMA:
-		return "COMMA"
-	case LESS:
-		return "LESS"
-	case LTHAN:
-		return "LTHAN"
-	case LEQTO:
-		return "LEQTO"
-	case GREATER:
-		return "GREATER"
-	case GTHAN:
-		return "GTHAN"
-	case GEQTO:
-		return "GEQTO"
+	case CLASS:
+		return "CLASS"
+	case SUPER:
+		return "SUPER"
 	case NOT:
 		return "NOT"
-	case NOTEQ:
-		return "NOTEQ"
-	case EQTO:
-		return "EQTO"
+	case NOT_EQUAL:
+		return "NOT_EQUAL"
+	case EQUAL:
+		return "EQUAL"
+	case EQUAL_EQUAL:
+		return "EQUAL_EQUAL"
+	case GREATER:
+		return "GREATER"
+	case GREATER_EQUAL:
+		return "GREATER_EQUAL"
+	case LESS:
+		return "LESS"
+	case LESS_EQUAL:
+		return "LESS_EQUAL"
+	case AND:
+		return "AND"
+	case ELSE:
+		return "ELSE"
+	case FALSE:
+		return "FALSE"
+	case FUN:
+		return "FUN"
+	case IF:
+		return "IF"
+	case NIL:
+		return "NIL"
+	case OR:
+		return "OR"
+	case RETURN:
+		return "RETURN"
+	case THIS:
+		return "THIS"
+	case TRUE:
+		return "TRUE"
+	case WHILE:
+		return "WHILE"
 	case SEMICOLON:
 		return "SEMICOLON"
 	default:
@@ -155,20 +142,26 @@ func (t Token) String() string {
 
 var keywords = map[string]TokenType{
 	"var":    VAR,
-	"let":    VAR,
 	"print":  PRINT,
-	"and":    AND,
-	"class":  CLASS,
-	"else":   ELSE,
-	"false":  FALSE,
 	"fun":    FUN,
 	"for":    FOR,
+	"class":  CLASS,
+	"super":  SUPER,
+	"and":    AND,
+	"else":   ELSE,
+	"false":  FALSE,
 	"if":     IF,
 	"nil":    NIL,
 	"or":     OR,
 	"return": RETURN,
-	"super":  SUPER,
 	"this":   THIS,
 	"true":   TRUE,
 	"while":  WHILE,
+}
+
+func LookupIdent(ident string) TokenType {
+	if tokType, ok := keywords[ident]; ok {
+		return tokType
+	}
+	return IDENT
 }

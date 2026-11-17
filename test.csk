@@ -8,7 +8,7 @@ class Person {
         this.age = age;
         this.sex = sex;
     }
-    sayHello() {
+    sayHello() 
         print "My name is " + name, " and I am a " + age + " year old " + sex;
     }
 }
@@ -18,6 +18,6 @@ It is also ignored
 */
 
 fun main() {
-    var person = Person("Michael", 22, "male");
+    var person = Person("Michael", 22, "male);
     person.sayHello();
 }

@@ -12,6 +12,87 @@ type Alexer struct {
 	pos    int
 }
 
+<<<<<<< HEAD:lexer.go
+=======
+type TokenType int
+
+const (
+	EOF TokenType = iota
+	LET
+	PRINT
+	FN
+	FOR
+	IDENT
+	NUMBER
+	STRING
+	ASSIGN
+	ADD
+	SUB
+	STAR
+	DIVIDE
+	LPARAN
+	RPARAN
+	SEMICOLON
+)
+
+
+func (t TokenType) String() string {
+	switch t {
+	case EOF:
+		return "EOF"
+	case LET:
+		return "LET"
+	case PRINT:
+		return "PRINT"
+	case FN:
+		return "FN"
+	case FOR:
+		return "FOR"	
+	case IDENT:
+		return "IDENT"
+	case NUMBER:
+		return "NUMBER"
+	case STRING:
+		return "STRING"
+	case ASSIGN:
+		return "ASSIGN"
+	case ADD:
+		return "ADD"
+	case SUB:
+		return "SUB"
+	case STAR:
+		return "STAR"
+	case DIVIDE:
+		return "DIVIDE"
+	case LPARAN:
+		return "LPARAN"
+	case RPARAN:
+		return "RPARAN"
+	case SEMICOLON:
+		return "SEMICOLON"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+type Token struct {
+	Literal string
+	Type    TokenType
+}
+
+func (t Token) String() string {
+	return fmt.Sprintf("Token(%s, %q)", t.Type, t.Literal)
+}
+
+
+var keywords = map[string]TokenType{
+	"let":   LET,
+	"print": PRINT,
+	"fn": FN,
+	"for": FOR,
+}
+
+>>>>>>> e79f835d898204ab293ee5414166cc8e55a202be:JS version/lexer.js
 
 func LookupIdent(ident string) TokenType {
 	if tokType, ok := keywords[ident]; ok {
